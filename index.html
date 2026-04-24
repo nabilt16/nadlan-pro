@@ -103,11 +103,78 @@
         <div class="form-row">
           <div class="form-group">
             <label>רחוב ומספר</label>
-            <input type="text" id="lookupStreet" placeholder="הרצל 10">
+            <input type="text" id="lookupStreet" placeholder="הרצל 10" autocomplete="off">
+            <div id="streetSuggestions" class="autocomplete-dropdown" hidden></div>
           </div>
           <div class="form-group">
             <label>עיר</label>
-            <input type="text" id="lookupCity" placeholder="תל אביב">
+            <input type="text" id="lookupCity" placeholder="תל אביב" autocomplete="off" list="cityList">
+            <datalist id="cityList">
+              <option value="תל אביב-יפו">
+              <option value="ירושלים">
+              <option value="חיפה">
+              <option value="ראשון לציון">
+              <option value="פתח תקווה">
+              <option value="אשדוד">
+              <option value="נתניה">
+              <option value="באר שבע">
+              <option value="בני ברק">
+              <option value="חולון">
+              <option value="בת ים">
+              <option value="רמת גן">
+              <option value="אשקלון">
+              <option value="רחובות">
+              <option value="הרצלייה">
+              <option value="כפר סבא">
+              <option value="מודיעין-מכבים-רעות">
+              <option value="בית שמש">
+              <option value="עכו">
+              <option value="נצרת">
+              <option value="חדרה">
+              <option value="לוד">
+              <option value="רמלה">
+              <option value="נהריה">
+              <option value="גבעתיים">
+              <option value="קריית אתא">
+              <option value="קריית גת">
+              <option value="אלעד">
+              <option value="אור יהודה">
+              <option value="אילת">
+              <option value="נס ציונה">
+              <option value="יבנה">
+              <option value="רעננה">
+              <option value="הוד השרון">
+              <option value="גבעת שמואל">
+              <option value="טבריה">
+              <option value="צפת">
+              <option value="קריית שמונה">
+              <option value="נתיבות">
+              <option value="שדרות">
+              <option value="ערד">
+              <option value="דימונה">
+              <option value="מגדל העמק">
+              <option value="עפולה">
+              <option value="נוף הגליל">
+              <option value="טייבה">
+              <option value="אום אל-פחם">
+              <option value="ראש העין">
+              <option value="כרמיאל">
+              <option value="גדרה">
+              <option value="גן יבנה">
+              <option value="קריית מלאכי">
+              <option value="קריית ביאליק">
+              <option value="קריית ים">
+              <option value="קריית מוצקין">
+              <option value="זכרון יעקב">
+              <option value="פרדס חנה-כרכור">
+              <option value="יקנעם עילית">
+              <option value="טירת כרמל">
+              <option value="אופקים">
+              <option value="מעלות-תרשיחא">
+              <option value="ביתר עילית">
+              <option value="מודיעין עילית">
+              <option value="אבו גוש">
+            </datalist>
           </div>
         </div>
         <div class="btn-group">
@@ -300,10 +367,10 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WLcE=" crossorigin=""></script>
 
-  <script src="js/storage.js"></script>
-  <script src="js/map.js"></script>
-  <script src="js/lookup.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/storage.js?v=4"></script>
+  <script src="js/map.js?v=4"></script>
+  <script src="js/lookup.js?v=4"></script>
+  <script src="js/app.js?v=4"></script>
 
 </body>
 </html>

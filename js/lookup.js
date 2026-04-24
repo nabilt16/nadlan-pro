@@ -60,11 +60,7 @@ const Lookup = {
 
   /** קישור לאתר הטאבו הרשמי */
   tabuUrl(block = '', parcel = '') {
-    // אתר רשות המקרקעין הישראלית
-    if (block && parcel) {
-      return `https://www.gov.il/he/service/application_for_land_registration_extract?block=${block}&parcel=${parcel}`;
-    }
-    return 'https://www.gov.il/he/departments/lands';
+    return 'https://mekarkein-online.justice.gov.il/';
   },
 
   /** חיפוש לפי כתובת — Geocoding + בניית קישורים */
@@ -206,5 +202,89 @@ const Lookup = {
       <a href="${links.waze}" target="_blank" class="qlink qlink-waze" title="Waze">🚗</a>
       <a href="${links.tabu}" target="_blank" class="qlink qlink-tabu" title="טאבו">📋</a>
     `;
+  },
+
+  /** השלמה אוטומטית לשדה רחוב */
+  initAutocomplete() {
+    const streetInput = document.getElementById('lookupStreet');
+    const cityInput   = document.getElementById('lookupCity');
+    const dropdown    = document.getElementById('streetSuggestions');
+    if (!streetInput || !dropdown) return;
+
+    let timer = null;
+    let selectedIndex = -1;
+
+    const showItems = (items) => {
+      if (!items.length) { dropdown.hidden = true; return; }
+      dropdown.innerHTML = items.map(s =>
+        `<div class="autocomplete-item">${s}</div>`
+      ).join('');
+      dropdown.hidden = false;
+      selectedIndex = -1;
+    };
+
+    const applySelection = (text) => {
+      streetInput.value = text;
+      dropdown.hidden = true;
+      selectedIndex = -1;
+    };
+
+    dropdown.addEventListener('mousedown', (e) => {
+      const item = e.target.closest('.autocomplete-item');
+      if (item) applySelection(item.textContent);
+    });
+
+    streetInput.addEventListener('keydown', (e) => {
+      const items = dropdown.querySelectorAll('.autocomplete-item');
+      if (!items.length || dropdown.hidden) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        items[selectedIndex]?.classList.remove('active');
+        selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+        items[selectedIndex]?.classList.add('active');
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        items[selectedIndex]?.classList.remove('active');
+        selectedIndex = Math.max(selectedIndex - 1, 0);
+        items[selectedIndex]?.classList.add('active');
+      } else if (e.key === 'Enter' && selectedIndex >= 0) {
+        e.preventDefault();
+        applySelection(items[selectedIndex].textContent);
+      } else if (e.key === 'Escape') {
+        dropdown.hidden = true;
+      }
+    });
+
+    streetInput.addEventListener('blur', () => {
+      setTimeout(() => { dropdown.hidden = true; }, 200);
+    });
+
+    streetInput.addEventListener('input', () => {
+      clearTimeout(timer);
+      const val = streetInput.value.trim();
+      if (val.length < 2) { dropdown.hidden = true; return; }
+
+      timer = setTimeout(async () => {
+        const city = cityInput.value.trim() || 'ישראל';
+        const q = encodeURIComponent(`${val}, ${city}`);
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${q}&limit=7&countrycodes=il&addressdetails=1&accept-language=he`;
+        try {
+          const res  = await fetch(url, { headers: { 'Accept-Language': 'he' } });
+          const data = await res.json();
+          const seen = new Set();
+          const suggestions = [];
+          for (const r of data) {
+            const road = r.address?.road;
+            if (!road) continue;
+            const label = r.address?.house_number ? `${road} ${r.address.house_number}` : road;
+            if (!seen.has(label)) { seen.add(label); suggestions.push(label); }
+            if (suggestions.length >= 5) break;
+          }
+          showItems(suggestions);
+        } catch {
+          dropdown.hidden = true;
+        }
+      }, 400);
+    });
   },
 };

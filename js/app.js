@@ -427,7 +427,8 @@ const App = {
       if (e.key === 'Enter') document.getElementById('btnMapSearch').click();
     });
 
-    // Lookup
+    // Lookup — autocomplete + אירועי חיפוש
+    Lookup.initAutocomplete();
     document.getElementById('btnLookupAddress').addEventListener('click', () => {
       const street = document.getElementById('lookupStreet').value.trim();
       const city = document.getElementById('lookupCity').value.trim();

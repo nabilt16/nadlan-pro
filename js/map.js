@@ -169,8 +169,8 @@ const MapManager = {
   /** Geocoding — כתובת → קואורדינטות (Nominatim) */
   async geocode(address) {
     try {
-      const encoded = encodeURIComponent(address + ', Israel');
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encoded}&limit=1&accept-language=he`;
+      const encoded = encodeURIComponent(address);
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encoded}&limit=1&countrycodes=il&accept-language=he`;
       const res = await fetch(url, {
         headers: { 'Accept-Language': 'he', 'User-Agent': 'NadlanPro/1.0' }
       });
