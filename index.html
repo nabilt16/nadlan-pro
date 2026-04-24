@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>נדל"ן פרו — ניהול תיק נכסים</title>
+  <meta name="description" content="מערכת ניהול נכסים לאיש תיווך עצמאי — עם מפה, גוש/חלקה, קישורים ממשלתיים">
+
+  <!-- Google Fonts: Heebo -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ═══════════════════════════ HEADER ═══════════════════════════ -->
+  <header class="app-header">
+    <div class="header-brand">
+      <span class="header-icon">🏘️</span>
+      <div>
+        <h1>נדל"ן פרו</h1>
+        <span class="header-sub">ניהול תיק נכסים</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-gold" id="btnAddProperty">＋ הוסף נכס</button>
+      <button class="btn btn-outline" id="btnExport">📤 ייצוא JSON</button>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════ TABS ═════════════════════════════ -->
+  <nav class="tabs-nav">
+    <button class="tab-btn active" data-tab="properties">📋 נכסים</button>
+    <button class="tab-btn" data-tab="map">🗺️ מפה</button>
+    <button class="tab-btn" data-tab="lookup">🔍 איתור גוש/חלקה</button>
+  </nav>
+
+  <!-- ═══════════════════════ TAB: PROPERTIES ══════════════════════ -->
+  <div class="tab-content active" id="tab-properties">
+
+    <!-- סרגל חיפוש וסינון -->
+    <div class="filter-bar">
+      <input type="text" id="searchInput"
+        placeholder="🔎 חיפוש לפי כתובת, בעלים, גוש..."
+        class="search-input">
+      <select id="statusFilter" class="filter-select">
+        <option value="">כל הסטטוסים</option>
+        <option value="active">פעיל</option>
+        <option value="handling">בטיפול</option>
+        <option value="sold">נמכר</option>
+      </select>
+      <select id="typeFilter" class="filter-select">
+        <option value="">כל הסוגים</option>
+        <option value="apartment">🏢 דירה</option>
+        <option value="house">🏠 בית</option>
+        <option value="land">🌿 קרקע</option>
+        <option value="commercial">🏪 מסחרי</option>
+      </select>
+    </div>
+
+    <!-- גריד נכסים -->
+    <div class="properties-grid" id="propertiesGrid"></div>
+
+    <!-- מצב ריק -->
+    <div class="empty-state" id="emptyState" style="display:none">
+      <div class="empty-icon">🏠</div>
+      <p>אין נכסים תואמים</p>
+      <button class="btn btn-gold" onclick="document.getElementById('btnAddProperty').click()">
+        ＋ הוסף נכס ראשון
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ TAB: MAP ═════════════════════════ -->
+  <div class="tab-content" id="tab-map">
+    <div class="map-toolbar">
+      <button class="btn btn-sm btn-outline active" id="btnStreetView">🗺️ רחובות</button>
+      <button class="btn btn-sm btn-outline" id="btnSatView">🛰️ לוויין</button>
+      <div class="map-search-wrap">
+        <input type="text" id="mapSearchInput"
+          placeholder="חפש כתובת על המפה..."
+          class="search-input search-sm">
+        <button class="btn btn-sm btn-gold" id="btnMapSearch">חפש</button>
+      </div>
+    </div>
+    <div id="map"></div>
+  </div>
+
+  <!-- ═══════════════════════ TAB: LOOKUP ══════════════════════════ -->
+  <div class="tab-content" id="tab-lookup">
+    <div class="lookup-container">
+
+      <!-- מצב א: חיפוש לפי כתובת -->
+      <div class="lookup-card">
+        <h3>🏠 מצב א — חיפוש לפי כתובת</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>רחוב ומספר</label>
+            <input type="text" id="lookupStreet" placeholder="הרצל 10">
+          </div>
+          <div class="form-group">
+            <label>עיר</label>
+            <input type="text" id="lookupCity" placeholder="תל אביב">
+          </div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-gold" id="btnLookupAddress">🔍 חפש כתובת</button>
+        </div>
+        <div id="lookupAddressResult" class="lookup-result"></div>
+      </div>
+
+      <!-- מצב ב: חיפוש לפי גוש/חלקה -->
+      <div class="lookup-card">
+        <h3>📐 מצב ב — חיפוש לפי גוש/חלקה</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>גוש</label>
+            <input type="number" id="lookupBlock" placeholder="6636">
+          </div>
+          <div class="form-group">
+            <label>חלקה</label>
+            <input type="number" id="lookupParcel" placeholder="170">
+          </div>
+          <div class="form-group">
+            <label>תת-חלקה</label>
+            <input type="number" id="lookupSubParcel" placeholder="12">
+          </div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-gold" id="btnLookupBlock">🔍 חפש גוש/חלקה</button>
+        </div>
+        <div id="lookupBlockResult" class="lookup-result"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═════════════════════ MODAL: הוספה / עריכה ══════════════════ -->
+  <div class="modal-overlay" id="modalOverlay" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">הוספת נכס חדש</h2>
+        <button class="modal-close" id="modalClose" aria-label="סגור">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="propertyForm" onsubmit="return false">
+
+          <!-- פרטי מיקום -->
+          <div class="form-section">
+            <div class="form-section-title">📍 פרטי מיקום</div>
+            <div class="form-row">
+              <div class="form-group form-group-wide">
+                <label>כתובת מלאה *</label>
+                <input type="text" id="fieldAddress"
+                  placeholder="הרצל 10, תל אביב" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>גוש</label>
+                <input type="text" id="fieldBlock" placeholder="6636">
+              </div>
+              <div class="form-group">
+                <label>חלקה</label>
+                <input type="text" id="fieldParcel" placeholder="170">
+              </div>
+              <div class="form-group">
+                <label>תת-חלקה</label>
+                <input type="text" id="fieldSubParcel" placeholder="12">
+              </div>
+            </div>
+          </div>
+
+          <!-- פרטי הנכס -->
+          <div class="form-section">
+            <div class="form-section-title">🏠 פרטי הנכס</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>סוג נכס</label>
+                <select id="fieldType">
+                  <option value="apartment">🏢 דירה</option>
+                  <option value="house">🏠 בית</option>
+                  <option value="land">🌿 קרקע</option>
+                  <option value="commercial">🏪 מסחרי</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>מחיר (₪)</label>
+                <input type="number" id="fieldPrice"
+                  placeholder="1,500,000" min="0">
+              </div>
+              <div class="form-group">
+                <label>שטח (מ"ר)</label>
+                <input type="number" id="fieldArea"
+                  placeholder="85" min="0">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>סטטוס</label>
+                <select id="fieldStatus">
+                  <option value="active">✅ פעיל</option>
+                  <option value="handling">⏳ בטיפול</option>
+                  <option value="sold">🏷️ נמכר</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- פרטי בעל הנכס -->
+          <div class="form-section">
+            <div class="form-section-title">👤 פרטי בעל הנכס</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>שם בעל הנכס</label>
+                <input type="text" id="fieldOwnerName"
+                  placeholder="ישראל ישראלי">
+              </div>
+              <div class="form-group">
+                <label>טלפון</label>
+                <input type="tel" id="fieldOwnerPhone"
+                  placeholder="050-0000000">
+              </div>
+            </div>
+          </div>
+
+          <!-- מסמכים -->
+          <div class="form-section">
+            <div class="form-section-title">📄 מסמכים קיימים</div>
+            <div class="docs-checkboxes">
+              <label class="checkbox-label">
+                <input type="checkbox" id="docTabu">
+                נסח טאבו
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="docAppraisal">
+                הערכת שמאי
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="docMortgage">
+                שיעבוד ⚠️
+              </label>
+            </div>
+          </div>
+
+          <!-- הערות -->
+          <div class="form-section">
+            <div class="form-section-title">📝 הערות</div>
+            <div class="form-group">
+              <textarea id="fieldNotes"
+                placeholder="הערות חופשיות על הנכס, מאפיינים, פרטים חשובים..."
+                rows="3"></textarea>
+            </div>
+          </div>
+
+          <!-- תמונות -->
+          <div class="form-section">
+            <div class="form-section-title">📷 תמונות</div>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+              <button type="button" class="btn btn-outline btn-sm" id="btnAddImages">📷 הוסף תמונות</button>
+              <small style="color:var(--text-muted);font-size:12px">עד 10 תמונות • דחוסות אוטומטית</small>
+            </div>
+            <input type="file" id="fieldImages" accept="image/*" multiple style="display:none">
+            <div id="imagePreviewGrid" class="image-preview-grid"></div>
+          </div>
+
+          <input type="hidden" id="fieldId">
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="btnCancelModal">ביטול</button>
+        <button class="btn btn-gold" id="btnSaveProperty">💾 שמור נכס</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ LIGHTBOX ════════════════════════════ -->
+  <div class="lightbox-overlay" id="lightboxOverlay" style="display:none">
+    <button class="lightbox-close" id="btnLightboxClose">✕</button>
+    <button class="lightbox-nav" id="btnLightboxPrev">›</button>
+    <div class="lightbox-center">
+      <img class="lightbox-img" id="lightboxImg" src="" alt="תמונת נכס">
+      <div class="lightbox-footer">
+        <span class="lightbox-counter" id="lightboxCounter"></span>
+        <button class="lightbox-del" id="btnLightboxDelete">🗑️ מחק תמונה</button>
+      </div>
+    </div>
+    <button class="lightbox-nav" id="btnLightboxNext">‹</button>
+  </div>
+
+  <!-- ═══════════════════════════ SCRIPTS ══════════════════════════ -->
+  <!-- סדר טעינה: storage → map → lookup → app -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WLcE=" crossorigin=""></script>
+
+  <script src="js/storage.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/lookup.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
